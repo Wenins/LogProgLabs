@@ -49,8 +49,8 @@ class facts - polyclinicDb
     расписание_приемов : (integer DID, integer Start, integer End).
     лекарство : (string Medicine).
     метод_лечения : (string Method).
-    выходные : (string Hday).
-    будние : (string Wday).
+    выходные : (string Day).
+    будние : (string Day).
     стоимость_приёма : (integer DID, integer PriceP, vault VP).
     стоимость_лекарства : (string Medicine, integer PriceM, vault VM).
     количество_таблеток : (string Medicine, integer Amount).
@@ -59,60 +59,80 @@ class facts - polyclinicDb
     таблетки_в_день : (string Medicine, integer TPD).
     длительность_таблеток : (string Medicine, integer TPD).
     
-class predicates
-    состав : (string Название_блюда) nondeterm.
-    исп_пр : (string Название_продукта) nondeterm.
-    калорийность : (string Название_блюда) nondeterm.
-    калор_расш : (string Название_блюда) failure.
+class facts
+    s : (real Sum) single.
 
 clauses
-    состав(X) :-
-        блюдо(Id, X, _),
-        writef("Состав %:\n", X),
-        состав_блюда(Id, IdПр, _),
-        продукт(IdПр, НазваниеПродукта, _, _),
-        writef("\t%\n", НазваниеПродукта),
+    s(0).
+    
+class predicates
+    расписание_поликлиники : (string Day) nondeterm.
+    история_болезней : (string PatientName) nondeterm.
+    назначенное_лечение : (string PatientName) nondeterm.
+    назначенные_препараты : (string PatientName) nondeterm.
+    общий_счёт : (string PatientName) nondeterm. 
+
+clauses
+     
+    история_болезней(X) :-
+        карта_пациента(ID, X, _, _, _, _),
+        приём(_, ID, _, Dis, _, _),
+        writef("История болезней %:\n", Name),
+        writef("\t%\n", Dis),
         fail.
-    состав(X) :-
-        блюдо(_, X, _),
+    история_болезней(X) :-
+        карта_пациента(, X, _, _, _, _),
         write("Конец списка\n").
 
-    исп_пр(X) :-
-        продукт(Id, X, _, _),
-        writef("% используется в:\n", X),
-        состав_блюда(IdБ, Id, _),
-        блюдо(IdБ, Название, _),
-        writef("\t%\n", Название),
+    назначенное_лечение(X) :-
+        карта_пациента(ID, X, _, _, _, _),
+        приём(_, ID, _, _, Heal, _),
+        writef("Лечение, назначенное %:\n", Name),
+        метод_лечения(Heal),
+        writef("\t%\n", Heal),
         fail.
-    исп_пр(X) :-
-        продукт(_, X, _, _),
+    назначенное_лечение(X) :-
+        карта_пациента(, X, _, _, _, _),
         write("Конец списка\n").
 
-    калорийность(X) :-
-        блюдо(Id, X, _),
+    назначенные_препараты(X) :-
+        карта_пациента(ID, X, _, _, _, _),
+        приём(_, ID, _, _, Heal, _),
+        writef("Лечение, назначенное %:\n", Name),
+        лекарство(Heal),
+        writef("\t%\n", Heal),
+        fail.
+    назначенные_препараты(X) :-
+        карта_пациента(, X, _, _, _, _),
+        write("Конец списка\n").
+
+    общий_счёт(X) :-
+        карта_пациента(ID, X, _, _, _, _),
         assert(s(0)),
-        состав_блюда(Id, IdПр, Количество),
-        продукт(IdПр, _, _, Калорийность),
+        приём(DID, ID, _, _, Heal, _),
+        стоимость_приёма(DID, Price),
+        
+        (лекарство(Heal) ->
+        (
+            стоимость_лекарства(Heal, Cost, Vault),
+            fail
+        )
+        ;
+        стоимость_терапии(Heal, Cost, Vault)
+        ).
         s(Sum),
-        assert(s(Sum + Количество * Калорийность)),
+        assert(s(Sum + Price + Cost)),
         fail.
-    калорийность(X) :-
-        блюдо(_, X, _),
+    общий_счёт(X) :-    
+        карта_пациента(_, X, _, _, _, _),
         s(Sum),
-        writef("Калорийность % равна % калорий", X, Sum),
+        writef("Общий счёт\n", X, Sum),
         nl.
-
-    калор_расш(X) :-
-        калорийность(X),
-        блюдо(Id, X, _),
-        состав_блюда(Id, IdПр, Количество),
-        продукт(IdПр, Название, _, Калорийность),
-        writef("\t%: % калорий\n", Название, Количество * Калорийность),
-        fail.
-
+        
+    
 clauses
     run() :-
-        file::consult("../kuldb.txt", kulinarDb),
+        file::consult("kuldb.txt", polyclinicDb),
         fail.
 
     run() :-
