@@ -95,7 +95,7 @@ clauses
     
 clauses
     run() :-
-        file::consult("kuldb.txt", polyclinicDb),
+        file::consult("polydb.txt", polyclinicDb),
         fail.
 
 
