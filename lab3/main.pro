@@ -48,6 +48,7 @@ class predicates
     назначенное_лечение : (string PatientName) -> string* Леч nondeterm.
     назначенные_препараты : (string PatientName) -> string* nondeterm.
     общий_счёт : (string PatientName) -> real Счёт nondeterm.
+    средний_возраст : (string DoctorName) -> real Возраст nondeterm.
     цена : (string C) nondeterm.
     выписанные_препараты : (string FullName) -> string* Таблетки determ.
     кол_преп : (string FullName) -> integer N determ.
@@ -117,6 +118,14 @@ clauses
                 ]) :-
         карта_пациента(ID, X, _, _, _, _).
 
+    средний_возраст(X) =
+            среднее(
+                [ Age ||
+                    приём(DID, PID, _, _, _, _),
+                    карта_пациента(PID, _, _, _, Age, _)
+                ]) :-
+        врач(DID, X, _).
+
 class predicates  %Вывод на экран продуктов блюда + их калорий
     write_tablec : (таблеч* Лечение_таблетками).
 clauses
@@ -134,14 +143,21 @@ clauses
     run() :-
         X = 'Кьеркегеров Тимофей Евгеньевич',
         L = общий_счёт(X),
-        write(L),
-        write("\n", назначенные_препараты(X)),
+        writef("Общий счёт пациента % составил %.", X, L),
+        writef("\nПрепараты, назначенные пациенту % : %", X, назначенные_препараты(X)),
         nl,
         fail.
 
     run() :-
         X = 'Амантадин',
         write_tablec(рецепт_табл(X)),
+        nl,
+        fail.
+
+    run() :-
+        X = 'Варлоков Михаил Евгеньевич',
+        writef("Средний возраст пациентов у % равен\t", X),
+        write(средний_возраст(X)),
         nl,
         fail.
 
