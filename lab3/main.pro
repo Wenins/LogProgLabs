@@ -126,7 +126,7 @@ clauses
                 ]) :-
         врач(DID, X, _).
 
-class predicates  %Вывод на экран продуктов блюда + их калорий
+class predicates  
     write_tablec : (таблеч* Лечение_таблетками).
 clauses
     write_tablec(L) :-
